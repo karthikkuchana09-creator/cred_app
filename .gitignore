@@ -6,4 +6,5 @@ db.sqlite3
 node_modules/
 frontend/dist/
 frontend/.turbo/
-curl_commands
+/curl_commands.md
+/create_venv.ps1
