@@ -1,0 +1,57 @@
+version: "3.9"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cc_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ccdb
+      MYSQL_USER: ccuser
+      MYSQL_PASSWORD: ccpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  django:
+    build: ./django_project
+    container_name: cc_django
+    command: /usr/src/app/startup.sh
+    depends_on:
+      - mysql
+    volumes:
+      - ./django_project:/usr/src/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=creditcard.settings
+      - DATABASE_HOST=mysql
+      - DATABASE_NAME=ccdb
+      - DATABASE_USER=ccuser
+      - DATABASE_PASSWORD=ccpass
+      - SECRET_KEY=super-secret-key
+
+  fastapi:
+    build: ./fastapi_payment
+    container_name: cc_fastapi
+    command: uvicorn main:app --host 0.0.0.0 --port 8100 --reload
+    depends_on:
+      - django
+    volumes:
+      - ./fastapi_payment:/usr/src/app
+    ports:
+      - "8100:8100"
+
+  frontend:
+    build: ./frontend
+    container_name: cc_frontend
+    depends_on:
+      - django
+    volumes:
+      - ./frontend:/usr/src/app
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql_data:
